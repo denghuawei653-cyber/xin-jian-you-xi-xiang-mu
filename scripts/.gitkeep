@@ -1,0 +1,7 @@
+GDScript 游戏逻辑脚本放这里。
+
+约定：
+- 缩进用 Tab（4 空格宽），见 .editorconfig
+- 类名 PascalCase，变量与函数 snake_case，常量 ALL_CAPS
+- 公共 API 加 ## 文档注释
+- 提交信息里注明影响范围，例如 feat(player): ...

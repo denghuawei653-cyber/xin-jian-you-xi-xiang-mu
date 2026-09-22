@@ -1,0 +1,28 @@
+# ============================================================
+# CODEOWNERS —— 谁负责哪些目录，PR 打开后会自动请求对应的人来审
+#
+# 生效位置就是本文件：.github/CODEOWNERS
+#
+# 下面每一行都【先注释掉了】，因为 GitHub 找不到对应用户时会在仓库首页报错。
+# 请把 @你的GitHub用户名 换成真实用户名，然后取消注释即可生效。
+# ============================================================
+
+# 默认规则：所有改动都需要项目负责人审核
+# *                       @your-github-name
+
+# ---- 玩法 / 客户端逻辑 ----
+# /scripts/               @your-github-name
+
+# ---- 场景与关卡（多人同时改同一场景最容易冲突，必须指定负责人）----
+# /scenes/                @level-designer-name
+
+# ---- 美术与音频资源 ----
+# /assets/                @artist-name
+
+# ---- 构建 / 导出 / CI（改动影响发版，必须人工审）----
+# /.github/               @your-github-name
+# /export_presets.cfg     @your-github-name
+# /project.godot          @your-github-name
+
+# ---- 第三方插件，升级前必须评审 ----
+# /addons/                @your-github-name

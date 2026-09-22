@@ -1,0 +1,52 @@
+#!/bin/sh
+# ============================================================
+# commit-msg —— 提交信息规范校验（约定式提交 Conventional Commits）
+#
+# 生效方式同样依赖： git config core.hooksPath .githooks
+# 紧急跳过： git commit --no-verify
+# ============================================================
+
+set -u
+
+msg_file="${1:-}"
+[ -n "$msg_file" ] || exit 0
+[ -f "$msg_file" ] || exit 0
+
+# 取提交信息的第一行作为主题
+IFS= read -r subject < "$msg_file" || subject=""
+[ -n "$subject" ] || exit 0
+
+# 整行都是注释的（例如 commit 时把内容全删了），交给 Git 自己报错
+if [ "${subject#\#}" != "$subject" ]; then
+	exit 0
+fi
+
+# Git 自己生成的信息直接放行
+case "$subject" in
+	Merge*|Revert*|fixup!*|squash!*)
+		exit 0
+		;;
+esac
+
+case "$subject" in
+	feat*|fix*|docs*|style*|refactor*|perf*|test*|build*|ci*|chore*|revert*)
+		;;
+	*)
+		printf '\n[提交信息不合规范] %s\n\n' "$subject"
+		printf '格式： <类型>(<影响范围>): <说明>\n'
+		printf '类型： feat  fix  docs  style  refactor  perf  test  build  ci  chore  revert\n'
+		printf '示例： feat(player): 加入二段跳与落地缓冲\n'
+		printf '      fix(ui): 修复背包数量在 99 时溢出显示\n\n'
+		printf '确需跳过请用： git commit --no-verify\n\n'
+		exit 1
+		;;
+esac
+
+# 结尾句号只是提醒，不拦截
+case "$subject" in
+	*.)
+		printf '\n[提醒] 提交说明结尾不要加句号： %s\n\n' "$subject"
+		;;
+esac
+
+exit 0

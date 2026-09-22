@@ -1,0 +1,5 @@
+自动化测试放这里（推荐 GUT 框架：https://github.com/bitwes/Gut）。
+
+约定：
+- 测试脚本命名 test_xxx.gd
+- CI 跑通后再合并到 develop

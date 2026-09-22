@@ -1,0 +1,6 @@
+美术、音频、字体等资源放这里。
+
+约定：
+- 图片 / 音频 / 模型源文件由 Git LFS 托管（见 .gitattributes）
+- PSD / Blend / FBX 这类不可合并的源文件，改之前先 git lfs lock
+- 对应的 *.import 文件必须一起提交，否则别人那边导入参数会不一样

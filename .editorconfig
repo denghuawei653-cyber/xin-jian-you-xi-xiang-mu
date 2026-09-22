@@ -1,0 +1,36 @@
+root = true
+
+# 全局默认：UTF-8 + LF + 结尾换行 + 去掉行尾空格
+# 这份配置和 .gitattributes 配合，能挡掉团队里绝大多数无意义 diff
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# ---- GDScript：官方风格是 4 空格宽的 Tab 缩进，务必统一 ----
+[*.gd]
+indent_style = tab
+indent_size = 4
+
+[*.gdshader]
+indent_style = tab
+indent_size = 4
+
+# ---- Godot 场景 / 资源文件：由编辑器维护，不要手动改缩进 ----
+[*.{tscn,tres,godot,cfg,import}]
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = false
+
+# ---- 配置与脚本 ----
+[*.{yml,yaml,json,toml}]
+indent_style = space
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.ps1]
+indent_style = space
+indent_size = 4

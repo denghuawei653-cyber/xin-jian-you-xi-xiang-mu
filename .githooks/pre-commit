@@ -1,0 +1,101 @@
+#!/bin/sh
+# ============================================================
+# pre-commit —— 入库前的最后一道闸门
+#
+# 每个新成员在仓库根目录执行一次即可生效：
+#     git config core.hooksPath .githooks
+#
+# 检查项：
+#   1. 阻止 Godot 编辑器缓存 .godot/ 入库
+#   2. 阻止超过 20 MB 的大文件绕过 LFS 直接入库
+#   3. 提醒 export_presets.cfg 等文件里可能混进密钥
+#   4. 提醒不要直接往 main / develop 上提交
+#
+# 紧急情况可临时跳过： git commit --no-verify
+# ============================================================
+
+set -u
+
+GIT_DIR=$(git rev-parse --git-dir 2>/dev/null) || exit 1
+LIST="$GIT_DIR/pre-commit-filelist.tmp"
+BLOCK="$GIT_DIR/pre-commit-block.tmp"
+WARN="$GIT_DIR/pre-commit-warn.tmp"
+MAX_BYTES=20971520   # 20 MB
+
+: > "$BLOCK"
+: > "$WARN"
+
+dump() {
+	while IFS= read -r line; do
+		printf '%s\n' "$line"
+	done < "$1"
+}
+
+# 本次要提交的文件（新增 / 修改 / 改名）
+git diff --cached --name-only --diff-filter=ACMR > "$LIST" 2>/dev/null || exit 0
+
+while IFS= read -r f; do
+	[ -n "$f" ] || continue
+
+	# ---------- 1. Godot 缓存目录 ----------
+	case "/$f/" in
+		*/.godot/*)
+			printf '[阻止] Godot 编辑器缓存不能入库： %s\n       先执行 git rm -r --cached .godot\n' "$f" >> "$BLOCK"
+			continue
+			;;
+		*/.import/*)
+			printf '[阻止] Godot 3 导入缓存不能入库： %s\n' "$f" >> "$BLOCK"
+			continue
+			;;
+	esac
+
+	# ---------- 2. 大文件必须走 LFS ----------
+	size=$(git cat-file -s ":$f" 2>/dev/null) || size=""
+	if [ -n "$size" ]; then
+		case "$(git check-attr filter -- "$f")" in
+			*'filter: lfs'*) is_lfs=1 ;;
+			*)               is_lfs=0 ;;
+		esac
+		if [ "$is_lfs" -eq 0 ] && [ "$size" -gt "$MAX_BYTES" ]; then
+			kb=$((size / 1024))
+			printf '[阻止] 大文件未走 LFS（约 %s KB）： %s\n       把该扩展名写进 .gitattributes，或改用 git lfs track\n' "$kb" "$f" >> "$BLOCK"
+		fi
+	fi
+
+	# ---------- 3. 疑似密钥 ----------
+	case "$f" in
+		export_presets.cfg|*.cfg|*.godot|*.json|*.env)
+			changed=$(git diff --cached -U0 -- "$f" 2>/dev/null)
+			case "$changed" in
+				*keystore/debug_password*|*keystore/release_password*|*api_key*|*api-key*|*secret_key*|*secret-key*|*access_token*|*access-token*|*BEGIN*PRIVATE*KEY*)
+					printf '[提醒] %s 的改动里疑似含密钥或口令，提交前请再确认一遍\n' "$f" >> "$WARN"
+					;;
+			esac
+			;;
+	esac
+done < "$LIST"
+
+# ---------- 4. 分支提醒 ----------
+branch=$(git branch --show-current 2>/dev/null || printf '')
+if [ -z "${SKIP_BRANCH_WARN:-}" ] && { [ "$branch" = "main" ] || [ "$branch" = "develop" ]; }; then
+	printf '[提醒] 你正在 %s 上直接提交。团队约定：改动走 feature/* 分支 + Pull Request\n' "$branch" >> "$WARN"
+fi
+
+rm -f "$LIST" 2>/dev/null || true
+
+if [ -s "$BLOCK" ]; then
+	printf '\n-------- 提交被拦截 --------\n'
+	dump "$BLOCK"
+	if [ -s "$WARN" ]; then dump "$WARN"; fi
+	printf -- '----------------------------\n'
+	printf '修正后重新 git add 再提交；确需跳过请用 git commit --no-verify\n\n'
+	exit 1
+fi
+
+if [ -s "$WARN" ]; then
+	printf '\n---- 提交前提醒（不阻止提交） ----\n'
+	dump "$WARN"
+	printf -- '--------------------------------\n\n'
+fi
+
+exit 0

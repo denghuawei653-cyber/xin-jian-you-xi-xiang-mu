@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+# 同一分支连续提交时，自动取消还没跑完的旧任务，省 CI 额度
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # ⚠️ 这个版本要和 project.godot 里 config/features 的版本保持一致
+  #    以后升级 Godot，只改这一行
+  GODOT_VERSION: "4.7-stable"
+
+jobs:
+
+  # ==========================================================
+  # 1. 仓库卫生：挡掉本机缓存、绕过 LFS 的大文件、明文密钥
+  # ==========================================================
+  repo-hygiene:
+    name: 仓库卫生检查
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码（故意不拉 LFS 实体，保留指针才能检查）
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - name: 运行卫生检查
+        run: sh tools/ci/repo-hygiene.sh
+
+  # ==========================================================
+  # 2. GDScript 代码规范
+  # ==========================================================
+  gdscript-lint:
+    name: GDScript 规范检查
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 安装 gdtoolkit（含 gdlint）
+        run: pip install "gdtoolkit>=4,<5" || pip install gdtoolkit
+
+      - name: 判断仓库里是否已有 GDScript
+        id: scan
+        run: |
+          if [ -z "$(git ls-files '*.gd')" ]; then
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 运行 gdlint
+        if: steps.scan.outputs.found == 'true'
+        run: gdlint $(git ls-files '*.gd')
+
+  # ==========================================================
+  # 3. 用无头 Godot 真实打开项目，验证资源导入与脚本能否解析
+  #    这是最有价值的一关：能挡住"我本地能跑"类的问题
+  # ==========================================================
+  godot-import:
+    name: Godot 项目导入检查
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码（含 LFS 实体，导入需要真实资源）
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: 下载 Godot 无头版
+        id: godot
+        run: |
+          set -e
+          URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          echo "下载地址：$URL"
+          if ! curl -fsSL -o /tmp/godot.zip "$URL"; then
+            echo "::warning title=已跳过导入检查::没有找到 Godot ${GODOT_VERSION} 的发布包，请修改 .github/workflows/ci.yml 里的 GODOT_VERSION"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          unzip -q /tmp/godot.zip -d /tmp/godot-bin
+          chmod +x /tmp/godot-bin/Godot_v*
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: 无头打开项目并检查报错
+        if: steps.godot.outputs.skip == 'false'
+        run: |
+          set -e
+          BIN=$(ls /tmp/godot-bin/Godot_v* | head -n 1)
+          "$BIN" --headless --editor --quit-after 40 --path . 2>&1 | tee /tmp/import.log || true
+
+          if grep -qiE 'SCRIPT ERROR|Parse Error|Failed to load script|Cannot open file' /tmp/import.log; then
+            echo "::error::Godot 导入过程中出现脚本或资源错误，详见上方日志"
+            exit 1
+          fi
+          echo "项目可正常打开，脚本无解析错误"

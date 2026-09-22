@@ -1,8 +1,11 @@
 name: CI
 
 on:
+  # 只在 main 上留 push 触发（合并后的最终验证）。
+  # develop 的提交由下面的 pull_request 负责检查 ——
+  # 否则同一次提交会被 push 和 PR 各跑一遍，白白烧一份 Actions 额度。
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
     branches: [main, develop]
 

@@ -3,26 +3,31 @@
 #
 # 生效位置就是本文件：.github/CODEOWNERS
 #
-# 下面每一行都【先注释掉了】，因为 GitHub 找不到对应用户时会在仓库首页报错。
-# 请把 @你的GitHub用户名 换成真实用户名，然后取消注释即可生效。
+# 规则说明：
+#   - 从上往下匹配，最后匹配到的那条生效（后面的规则优先级更高）
+#   - 用户名必须是【真实存在的 GitHub 账号】，否则仓库首页会报错
+#   - 想让某条规则真正「强制」审核，还需要在分支保护里勾选
+#     Require review from Code Owners
 # ============================================================
 
 # 默认规则：所有改动都需要项目负责人审核
-# *                       @your-github-name
+*                       @denghuawei653-cyber
 
 # ---- 玩法 / 客户端逻辑 ----
-# /scripts/               @your-github-name
+/scripts/               @denghuawei653-cyber
 
 # ---- 场景与关卡（多人同时改同一场景最容易冲突，必须指定负责人）----
-# /scenes/                @level-designer-name
+# TODO: 有专职关卡/场景同学后，换成对方的用户名
+/scenes/                @denghuawei653-cyber
 
 # ---- 美术与音频资源 ----
-# /assets/                @artist-name
+# TODO: 有美术同学后，换成对方的用户名
+/assets/                @denghuawei653-cyber
 
 # ---- 构建 / 导出 / CI（改动影响发版，必须人工审）----
-# /.github/               @your-github-name
-# /export_presets.cfg     @your-github-name
-# /project.godot          @your-github-name
+/.github/               @denghuawei653-cyber
+/export_presets.cfg     @denghuawei653-cyber
+/project.godot          @denghuawei653-cyber
 
 # ---- 第三方插件，升级前必须评审 ----
-# /addons/                @your-github-name
+/addons/                @denghuawei653-cyber

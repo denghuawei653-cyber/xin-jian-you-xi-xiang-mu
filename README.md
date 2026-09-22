@@ -198,7 +198,7 @@ git commit -m "chore: 移除误提交的 Godot 缓存"
 
 | 项目 | 状态 |
 |---|---|
-| 远端仓库 | `https://github.com/denghuawei653-cyber/xin-jian-you-xi-xiang-mu`（私有） |
+| 远端仓库 | `https://github.com/denghuawei653-cyber/xin-jian-you-xi-xiang-mu`（公开） |
 | 分支 | `main`（默认）+ `develop` |
 | CODEOWNERS | 已填 `@denghuawei653-cyber` 并启用 |
 | CI | 已在两个分支上跑通：仓库卫生检查 / GDScript 规范检查 / Godot 项目导入检查 |
@@ -206,26 +206,24 @@ git commit -m "chore: 移除误提交的 Godot 缓存"
 | 合并后自动删分支 | 已开启 |
 | 推送凭据 | `gh auth setup-git` 已配好（HTTPS + gh token） |
 
-### ⚠️ 分支保护暂时加不上（需要你决定）
+### ✅ 分支保护已启用（2026-09-22 仓库转公开后）
 
-`main` 的**强制保护**（必须走 PR、必须 CI 全绿、必须有人 approve）在
-**私有仓库 + 免费账号**上是 GitHub 的付费功能，API 会直接返回
-`Upgrade to GitHub Pro or make this repository public`。`Rulesets` 同样受限。
+`main` 已开启硬保护，以下规则由 GitHub 强制执行，绕不过去：
 
-三条路，任选：
+| 规则 | 含义 |
+|---|---|
+| Require pull request | 不能直接 push 到 `main`，必须走 PR |
+| 1 个 approve | 至少一人审核通过才能合并 |
+| Require review from Code Owners | 涉及 `.github/`、`docs/` 等归属目录的改动必须负责人审 |
+| Require status checks（3 项 CI 全绿 + 分支最新） | CI 红灯或落后于 `main` 一律禁止合并 |
+| Require linear history | 禁止 merge commit |
+| 禁止 force push / 删除分支 | 历史不可改写 |
 
-1. **升 GitHub Pro**（个人版即可）→ 我给的保护规则可以直接启用；
-2. **把仓库改成 public** → 免费就能开保护，但代码公开；
-3. **维持现状**（推荐先这样）→ 靠下面这三层软约束，对 2~5 人小队其实够用：
-   - 本地钩子：`pre-commit` / `commit-msg` 在**提交那一刻**就拦住（这是真正干活的）
-   - CI 红灯：PR 上三个检查挂红，谁都不该点合并
-   - 团队约定：`CONTRIBUTING.md` 里写了红线
-
-> 换句话说：**本地钩子挡日常，CI 挡意外，人工评审挡设计**。等你觉得需要硬门禁了，
-> 升个 Pro 告诉我，一条命令就能补上。
+> 管理员（仓库 owner）默认不受 `enforce_admins` 约束 —— 即你自己仍可绕过 PR 直推。
+> 想连自己也锁死的话，到 Settings → Branches → Branch protection 里勾上
+> **Do not allow bypassing the above settings**。
 
 ### 仍需人工处理
 
-- [ ] 决定上面三条路走哪条（需要硬门禁就得升 Pro 或改公开）
 - [ ] 视需要补充 `LICENSE`
 - [ ] 第一个 PR 合进来后，确认 CI 三个检查都出现在 PR 的 checks 里

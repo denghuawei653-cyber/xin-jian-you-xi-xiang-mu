@@ -13,7 +13,11 @@
 set -u
 
 status=0
-LIST=$(mktemp)
+
+# 临时文件放在 .git 目录里，避免依赖 mktemp，也不污染工作区
+GIT_DIR_PATH=$(git rev-parse --git-dir 2>/dev/null) || GIT_DIR_PATH=".git"
+LIST="$GIT_DIR_PATH/repo-hygiene-list.tmp"
+: > "$LIST"
 
 problem() {
 	printf '\n[FAIL] %s\n' "$1"
@@ -94,7 +98,7 @@ else
 fi
 
 # ------------------------------------------------------------
-rm -f "$LIST"
+rm -f "$LIST" 2>/dev/null || true
 
 if [ "$status" -eq 0 ]; then
 	printf '\n全部检查通过\n\n'

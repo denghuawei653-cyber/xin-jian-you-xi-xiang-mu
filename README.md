@@ -192,11 +192,40 @@ git commit -m "chore: 移除误提交的 Godot 缓存"
 
 ---
 
-## 10. 待办（搭好仓库后需要人工做的事）
+## 10. 当前已配置 / 仍需人工处理
 
-- [ ] 把 `.github/CODEOWNERS` 里的 `@your-github-name` 换成真实用户名，并取消注释
-- [ ] 在 GitHub 仓库设置里把 `main` 设为受保护分支（Require pull request + Require status checks）
-- [ ] 在 GitHub 仓库设置里勾选 **Automatically delete head branches**
-- [ ] 确认仓库设置中 LFS 已启用（GitHub 默认启用）
-- [ ] 确认 `.editorconfig` 的缩进规则与团队编辑器设置一致
+### 已在远端配好
+
+| 项目 | 状态 |
+|---|---|
+| 远端仓库 | `https://github.com/denghuawei653-cyber/xin-jian-you-xi-xiang-mu`（私有） |
+| 分支 | `main`（默认）+ `develop` |
+| CODEOWNERS | 已填 `@denghuawei653-cyber` 并启用 |
+| CI | 已在两个分支上跑通：仓库卫生检查 / GDScript 规范检查 / Godot 项目导入检查 |
+| 合并策略 | 已禁用 merge commit（只允许 squash / rebase）→ 保证线性历史 |
+| 合并后自动删分支 | 已开启 |
+| 推送凭据 | `gh auth setup-git` 已配好（HTTPS + gh token） |
+
+### ⚠️ 分支保护暂时加不上（需要你决定）
+
+`main` 的**强制保护**（必须走 PR、必须 CI 全绿、必须有人 approve）在
+**私有仓库 + 免费账号**上是 GitHub 的付费功能，API 会直接返回
+`Upgrade to GitHub Pro or make this repository public`。`Rulesets` 同样受限。
+
+三条路，任选：
+
+1. **升 GitHub Pro**（个人版即可）→ 我给的保护规则可以直接启用；
+2. **把仓库改成 public** → 免费就能开保护，但代码公开；
+3. **维持现状**（推荐先这样）→ 靠下面这三层软约束，对 2~5 人小队其实够用：
+   - 本地钩子：`pre-commit` / `commit-msg` 在**提交那一刻**就拦住（这是真正干活的）
+   - CI 红灯：PR 上三个检查挂红，谁都不该点合并
+   - 团队约定：`CONTRIBUTING.md` 里写了红线
+
+> 换句话说：**本地钩子挡日常，CI 挡意外，人工评审挡设计**。等你觉得需要硬门禁了，
+> 升个 Pro 告诉我，一条命令就能补上。
+
+### 仍需人工处理
+
+- [ ] 决定上面三条路走哪条（需要硬门禁就得升 Pro 或改公开）
 - [ ] 视需要补充 `LICENSE`
+- [ ] 第一个 PR 合进来后，确认 CI 三个检查都出现在 PR 的 checks 里
